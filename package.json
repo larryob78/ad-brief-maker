@@ -1,0 +1,43 @@
+{
+  "name": "napkin-hackathon-video",
+  "version": "1.0.0",
+  "description": "Napkin Hackathon video created with Remotion and Runway AI",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render src/index.ts NapkinHackathon out/video.mp4",
+    "build:gif": "remotion render src/index.ts NapkinHackathon out/preview.gif --image-format=png",
+    "upgrade": "remotion upgrade",
+    "render": "remotion render",
+    "lambda:render": "remotion lambda render",
+    "lambda:deploy": "remotion lambda sites create"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.0",
+    "@remotion/cli": "^4.0.0",
+    "@remotion/player": "^4.0.0",
+    "@remotion/renderer": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remotion": "^4.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config": "^4.0.0",
+    "@types/react": "^18.2.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "remotion",
+    "video",
+    "napkin",
+    "hackathon",
+    "runway",
+    "ai"
+  ],
+  "author": "larryob78",
+  "license": "MIT"
+}
