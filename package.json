@@ -1,44 +1,25 @@
 {
-  "name": "desktop-recorder",
+  "name": "screen-recorder",
   "version": "1.0.0",
-  "description": "Minimal Mac desktop recording app",
-  "main": "dist/main/main.js",
+  "description": "Minimal web-based screen recorder",
+  "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
-    "dev:renderer": "vite",
-    "dev:main": "tsc -p tsconfig.main.json && electron .",
-    "build": "tsc -p tsconfig.main.json && vite build",
-    "start": "electron .",
-    "package": "npm run build && electron-builder"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "fluent-ffmpeg": "^2.1.2"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@types/fluent-ffmpeg": "^2.1.21",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.2",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.0",
     "vite": "^5.0.0"
-  },
-  "build": {
-    "appId": "com.recorder.desktop",
-    "productName": "Desktop Recorder",
-    "mac": {
-      "category": "public.app-category.utilities",
-      "target": "dmg"
-    },
-    "files": [
-      "dist/**/*"
-    ]
   }
 }
