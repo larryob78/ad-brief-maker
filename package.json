@@ -1,0 +1,26 @@
+{
+  "name": "ad-brief-maker",
+  "version": "1.0.0",
+  "description": "AI-powered tool for creating video advertising briefs with Remotion",
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render HackerTime out/hacker-time.mp4",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.242",
+    "@remotion/tailwind": "4.0.242",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.242"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "prettier": "3.4.1",
+    "tailwindcss": "^3.4.15",
+    "typescript": "5.7.2"
+  }
+}
