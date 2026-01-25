@@ -1,0 +1,26 @@
+{
+  "name": "ad-brief-maker",
+  "version": "1.0.0",
+  "description": "AI-powered tool for creating comprehensive advertising briefs with automated content generation and strategic planning",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "remotion:preview": "remotion preview src/remotion/index.ts",
+    "remotion:render": "remotion render src/remotion/index.ts AdBrief out/video.mp4"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@remotion/player": "^4.0.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0",
+    "@remotion/cli": "^4.0.0"
+  }
+}
