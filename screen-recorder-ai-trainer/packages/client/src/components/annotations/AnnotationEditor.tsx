@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRecordings } from '../../context/RecordingContext';
 import { AnnotationStep } from '@shared/types/recording';
 import { formatDuration } from '../../utils/format';
@@ -20,12 +20,6 @@ const styles = {
   header: {
     padding: '20px 24px 16px',
     borderBottom: '1px solid var(--border)',
-  },
-  titleRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '8px',
   },
   titleInput: {
     fontSize: '1.1rem',
@@ -152,6 +146,7 @@ const styles = {
     gap: '8px',
     alignItems: 'center',
     marginTop: '8px',
+    flexWrap: 'wrap' as const,
   },
   tag: {
     display: 'inline-flex',
@@ -169,21 +164,52 @@ const styles = {
 export function AnnotationEditor() {
   const { selectedRecording, updateRecording } = useRecordings();
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const videoUrlRef = useRef<string | null>(null);
+  // Local state for text fields to avoid IDB write on every keystroke
+  const [localTitle, setLocalTitle] = useState('');
+  const [localDesc, setLocalDesc] = useState('');
 
-  React.useEffect(() => {
+  // Sync local fields when selected recording changes
+  useEffect(() => {
+    setLocalTitle(selectedRecording?.title ?? '');
+    setLocalDesc(selectedRecording?.description ?? '');
+  }, [selectedRecording?.id]);
+
+  // Video URL management with proper cleanup and cancellation
+  useEffect(() => {
+    let cancelled = false;
+
     if (selectedRecording) {
-      if (selectedRecording.videoBlobUrl) {
-        setVideoUrl(selectedRecording.videoBlobUrl);
-      } else {
-        getVideoBlob(selectedRecording.id).then(blob => {
-          if (blob) setVideoUrl(URL.createObjectURL(blob));
-        });
-      }
+      // Always fetch from IndexedDB -- videoBlobUrl is not persisted
+      getVideoBlob(selectedRecording.id).then(blob => {
+        if (blob && !cancelled) {
+          const url = URL.createObjectURL(blob);
+          videoUrlRef.current = url;
+          setVideoUrl(url);
+        }
+      });
+    } else {
+      setVideoUrl(null);
     }
+
     return () => {
-      if (videoUrl && !selectedRecording?.videoBlobUrl) URL.revokeObjectURL(videoUrl!);
+      cancelled = true;
+      if (videoUrlRef.current) {
+        URL.revokeObjectURL(videoUrlRef.current);
+        videoUrlRef.current = null;
+      }
+      setVideoUrl(null);
     };
   }, [selectedRecording?.id]);
+
+  const handleDownloadVideo = useCallback(async () => {
+    if (!selectedRecording) return;
+    try {
+      await exportRecordingVideo(selectedRecording.id, selectedRecording.title);
+    } catch {
+      alert('Video file not available for download.');
+    }
+  }, [selectedRecording]);
 
   if (!selectedRecording) {
     return (
@@ -199,7 +225,7 @@ export function AnnotationEditor() {
 
   const rec = selectedRecording;
 
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: string, value: unknown) => {
     updateRecording({ ...rec, [field]: value, updatedAt: new Date().toISOString() });
   };
 
@@ -222,7 +248,7 @@ export function AnnotationEditor() {
   const updateStep = (stepId: string, updates: Partial<AnnotationStep>) => {
     updateRecording({
       ...rec,
-      steps: rec.steps.map(s => s.id === stepId ? { ...s, ...updates } : s),
+      steps: rec.steps.map((s: AnnotationStep) => s.id === stepId ? { ...s, ...updates } : s),
       updatedAt: new Date().toISOString(),
     });
   };
@@ -230,7 +256,7 @@ export function AnnotationEditor() {
   const deleteStep = (stepId: string) => {
     updateRecording({
       ...rec,
-      steps: rec.steps.filter(s => s.id !== stepId),
+      steps: rec.steps.filter((s: AnnotationStep) => s.id !== stepId),
       updatedAt: new Date().toISOString(),
     });
   };
@@ -241,24 +267,30 @@ export function AnnotationEditor() {
         <input
           style={styles.titleInput}
           placeholder="Give this recording a title..."
-          value={rec.title}
-          onChange={e => updateField('title', e.target.value)}
+          value={localTitle}
+          onChange={e => setLocalTitle(e.target.value)}
           onFocus={e => (e.target.style.borderBottomColor = 'var(--accent)')}
-          onBlur={e => (e.target.style.borderBottomColor = 'transparent')}
+          onBlur={e => {
+            e.target.style.borderBottomColor = 'transparent';
+            if (localTitle !== rec.title) updateField('title', localTitle);
+          }}
         />
         <textarea
           style={styles.descInput}
           placeholder="Describe the workflow being recorded..."
-          value={rec.description}
-          onChange={e => updateField('description', e.target.value)}
+          value={localDesc}
+          onChange={e => setLocalDesc(e.target.value)}
+          onBlur={() => {
+            if (localDesc !== rec.description) updateField('description', localDesc);
+          }}
         />
         <div style={styles.tagInput}>
-          {rec.tags.map((tag, i) => (
+          {rec.tags.map((tag: string, i: number) => (
             <span key={i} style={styles.tag}>
               {tag}
               <span
                 style={{ cursor: 'pointer', marginLeft: '2px' }}
-                onClick={() => updateField('tags', rec.tags.filter((_, j) => j !== i))}
+                onClick={() => updateField('tags', rec.tags.filter((_: string, j: number) => j !== i))}
               >x</span>
             </span>
           ))}
@@ -279,7 +311,7 @@ export function AnnotationEditor() {
         <div style={styles.videoContainer}>
           <video src={videoUrl} controls style={styles.video} />
           <div style={styles.videoActions}>
-            <button style={styles.smallBtn} onClick={() => exportRecordingVideo(rec.id, rec.title)}>
+            <button style={styles.smallBtn} onClick={handleDownloadVideo}>
               Download Video
             </button>
           </div>
@@ -292,7 +324,7 @@ export function AnnotationEditor() {
           <button style={styles.addBtn} onClick={addStep}>+ Add Step</button>
         </div>
 
-        {rec.steps.map((step, index) => (
+        {rec.steps.map((step: AnnotationStep, index: number) => (
           <div key={step.id} style={styles.step}>
             <div style={styles.stepHeader}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
@@ -319,7 +351,7 @@ export function AnnotationEditor() {
               <select
                 style={{ ...styles.stepInput, padding: '6px 8px' }}
                 value={step.actionType}
-                onChange={e => updateStep(step.id, { actionType: e.target.value as any })}
+                onChange={e => updateStep(step.id, { actionType: e.target.value as AnnotationStep['actionType'] })}
               >
                 {ACTION_TYPES.map(t => (
                   <option key={t} value={t}>{t.replace('_', ' ')}</option>

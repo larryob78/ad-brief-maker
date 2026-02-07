@@ -10,7 +10,12 @@ interface VideoEntry {
   blob: Blob;
 }
 
+// Singleton connection to avoid leaking IDB connections
+let dbInstance: IDBDatabase | null = null;
+
 function openDB(): Promise<IDBDatabase> {
+  if (dbInstance) return Promise.resolve(dbInstance);
+
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -27,16 +32,23 @@ function openDB(): Promise<IDBDatabase> {
       }
     };
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      dbInstance = request.result;
+      // Reset singleton if connection closes unexpectedly
+      dbInstance.onclose = () => { dbInstance = null; };
+      resolve(dbInstance);
+    };
     request.onerror = () => reject(request.error);
   });
 }
 
 export async function saveRecording(recording: Recording, videoBlob?: Blob): Promise<void> {
   const db = await openDB();
+  // Strip transient videoBlobUrl before persisting -- it's invalid after page reload
+  const { videoBlobUrl: _, ...persistable } = recording as Recording & { videoBlobUrl?: string };
   const tx = db.transaction([RECORDINGS_STORE, VIDEOS_STORE], 'readwrite');
 
-  tx.objectStore(RECORDINGS_STORE).put(recording);
+  tx.objectStore(RECORDINGS_STORE).put(persistable);
   if (videoBlob) {
     tx.objectStore(VIDEOS_STORE).put({ id: recording.id, blob: videoBlob });
   }
@@ -93,8 +105,9 @@ export async function deleteRecording(id: string): Promise<void> {
 
 export async function updateRecording(recording: Recording): Promise<void> {
   const db = await openDB();
+  const { videoBlobUrl: _, ...persistable } = recording as Recording & { videoBlobUrl?: string };
   const tx = db.transaction(RECORDINGS_STORE, 'readwrite');
-  tx.objectStore(RECORDINGS_STORE).put(recording);
+  tx.objectStore(RECORDINGS_STORE).put(persistable);
   return new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);

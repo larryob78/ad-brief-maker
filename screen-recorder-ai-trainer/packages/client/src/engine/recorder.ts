@@ -111,9 +111,13 @@ export class ScreenRecorder {
       };
 
       // Handle user stopping the share via browser UI
+      // Use the onstop handler above (via onDataAvailable) so data is not lost
       this.mediaStream.getVideoTracks()[0].onended = () => {
         if (this.state === 'recording' || this.state === 'paused') {
-          this.stop();
+          this.setState('stopping');
+          if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+          }
         }
       };
 
@@ -170,6 +174,7 @@ export class ScreenRecorder {
 
       this.mediaRecorder.onstop = () => {
         const blob = new Blob(this.chunks, { type: mimeType });
+        this.events.onDataAvailable?.(blob);
         this.cleanup();
         this.setState('idle');
         resolve(blob);
@@ -213,6 +218,7 @@ export class ScreenRecorder {
 
   getDuration(): number {
     if (this.state === 'idle') return 0;
-    return Date.now() - this.startTime - this.pausedDuration;
+    const currentPause = this.state === 'paused' ? (Date.now() - this.pauseStart) : 0;
+    return Date.now() - this.startTime - this.pausedDuration - currentPause;
   }
 }

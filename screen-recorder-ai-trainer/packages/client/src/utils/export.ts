@@ -1,7 +1,7 @@
 import { Recording, ExportEntry } from '@shared/types/recording';
 import { getVideoBlob } from '../storage/db';
 
-export async function exportAsJSON(recordings: Recording[]): Promise<void> {
+export function exportAsJSON(recordings: Recording[]): void {
   const entries: ExportEntry[] = recordings.map(r => ({
     recording_id: r.id,
     title: r.title,
@@ -9,7 +9,7 @@ export async function exportAsJSON(recordings: Recording[]): Promise<void> {
     duration_ms: r.duration,
     category: r.category,
     tags: r.tags,
-    steps: r.steps.map(s => ({
+    steps: r.steps.map((s) => ({
       timestamp_ms: s.timestamp,
       end_timestamp_ms: s.endTimestamp,
       action: s.action,
@@ -25,7 +25,7 @@ export async function exportAsJSON(recordings: Recording[]): Promise<void> {
   downloadBlob(blob, 'ai-training-data.json');
 }
 
-export async function exportAsJSONL(recordings: Recording[]): Promise<void> {
+export function exportAsJSONL(recordings: Recording[]): void {
   const lines = recordings.map(r => JSON.stringify({
     recording_id: r.id,
     title: r.title,
@@ -33,7 +33,7 @@ export async function exportAsJSONL(recordings: Recording[]): Promise<void> {
     duration_ms: r.duration,
     category: r.category,
     tags: r.tags,
-    steps: r.steps.map(s => ({
+    steps: r.steps.map((s) => ({
       timestamp_ms: s.timestamp,
       action: s.action,
       description: s.description,

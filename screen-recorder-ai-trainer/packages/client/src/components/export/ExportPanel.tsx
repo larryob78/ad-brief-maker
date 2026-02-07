@@ -76,7 +76,7 @@ export function ExportPanel() {
         style={styles.exportBtn}
         onClick={() => exportAsJSON(readyRecordings)}
         disabled={readyRecordings.length === 0}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
+        onMouseEnter={e => { if (readyRecordings.length > 0) (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
       >
         <div>
@@ -90,7 +90,7 @@ export function ExportPanel() {
         style={styles.exportBtn}
         onClick={() => exportAsJSONL(readyRecordings)}
         disabled={readyRecordings.length === 0}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
+        onMouseEnter={e => { if (readyRecordings.length > 0) (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
       >
         <div>

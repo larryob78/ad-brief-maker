@@ -6,21 +6,31 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const METADATA_DIR = path.join(__dirname, '../../../data');
 
+async function loadAllRecordings(): Promise<any[]> {
+  await fs.mkdir(METADATA_DIR, { recursive: true });
+  const files = await fs.readdir(METADATA_DIR);
+  const results = await Promise.all(
+    files
+      .filter(f => f.endsWith('.json'))
+      .map(async f => {
+        try {
+          const content = await fs.readFile(path.join(METADATA_DIR, f), 'utf-8');
+          return JSON.parse(content);
+        } catch {
+          console.warn(`Skipping corrupted metadata file: ${f}`);
+          return null;
+        }
+      })
+  );
+  return results.filter(Boolean);
+}
+
 export const exportRouter = Router();
 
 // Export all recordings as JSON training data
 exportRouter.get('/json', async (_req, res) => {
   try {
-    await fs.mkdir(METADATA_DIR, { recursive: true });
-    const files = await fs.readdir(METADATA_DIR);
-    const recordings = await Promise.all(
-      files
-        .filter(f => f.endsWith('.json'))
-        .map(async f => {
-          const content = await fs.readFile(path.join(METADATA_DIR, f), 'utf-8');
-          return JSON.parse(content);
-        })
-    );
+    const recordings = await loadAllRecordings();
 
     const exportData = recordings.map(r => ({
       recording_id: r.id,
@@ -51,16 +61,7 @@ exportRouter.get('/json', async (_req, res) => {
 // Export as JSONL
 exportRouter.get('/jsonl', async (_req, res) => {
   try {
-    await fs.mkdir(METADATA_DIR, { recursive: true });
-    const files = await fs.readdir(METADATA_DIR);
-    const recordings = await Promise.all(
-      files
-        .filter(f => f.endsWith('.json'))
-        .map(async f => {
-          const content = await fs.readFile(path.join(METADATA_DIR, f), 'utf-8');
-          return JSON.parse(content);
-        })
-    );
+    const recordings = await loadAllRecordings();
 
     const lines = recordings.map(r => JSON.stringify({
       recording_id: r.id,

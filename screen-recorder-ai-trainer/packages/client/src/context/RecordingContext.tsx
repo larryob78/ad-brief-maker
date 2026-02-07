@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { Recording } from '@shared/types/recording';
 import { getAllRecordings, deleteRecording as dbDelete, updateRecording as dbUpdate } from '../storage/db';
 
@@ -17,36 +17,40 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [selectedRecording, setSelectedRecording] = useState<Recording | null>(null);
 
-  const refreshRecordings = async () => {
+  const refreshRecordings = useCallback(async () => {
     const all = await getAllRecordings();
     setRecordings(all);
-  };
+  }, []);
 
-  const deleteRecording = async (id: string) => {
+  const deleteRecording = useCallback(async (id: string) => {
     await dbDelete(id);
-    if (selectedRecording?.id === id) setSelectedRecording(null);
-    await refreshRecordings();
-  };
+    setSelectedRecording(prev => prev?.id === id ? null : prev);
+    const all = await getAllRecordings();
+    setRecordings(all);
+  }, []);
 
-  const updateRecording = async (recording: Recording) => {
+  const updateRecording = useCallback(async (recording: Recording) => {
     await dbUpdate(recording);
-    if (selectedRecording?.id === recording.id) setSelectedRecording(recording);
-    await refreshRecordings();
-  };
+    setSelectedRecording(prev => prev?.id === recording.id ? recording : prev);
+    const all = await getAllRecordings();
+    setRecordings(all);
+  }, []);
 
   useEffect(() => {
     refreshRecordings();
-  }, []);
+  }, [refreshRecordings]);
+
+  const value = useMemo(() => ({
+    recordings,
+    selectedRecording,
+    setSelectedRecording,
+    refreshRecordings,
+    deleteRecording,
+    updateRecording,
+  }), [recordings, selectedRecording, refreshRecordings, deleteRecording, updateRecording]);
 
   return (
-    <RecordingContext.Provider value={{
-      recordings,
-      selectedRecording,
-      setSelectedRecording,
-      refreshRecordings,
-      deleteRecording,
-      updateRecording,
-    }}>
+    <RecordingContext.Provider value={value}>
       {children}
     </RecordingContext.Provider>
   );

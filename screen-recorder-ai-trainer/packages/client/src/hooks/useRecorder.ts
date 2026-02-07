@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ScreenRecorder, RecorderState } from '../engine/recorder';
 import { RecordingConfig, Recording, AnnotationStep } from '@shared/types/recording';
 import { saveRecording } from '../storage/db';
@@ -10,15 +10,21 @@ export function useRecorder() {
   const [currentRecording, setCurrentRecording] = useState<Recording | null>(null);
   const recorderRef = useRef<ScreenRecorder | null>(null);
   const mimeTypeRef = useRef<string>('video/webm');
+  const blobUrlRef = useRef<string | null>(null);
+  const currentRecordingRef = useRef<Recording | null>(null);
+  const durationRef = useRef(0);
+
+  // Keep refs in sync with state so callbacks have fresh values
+  useEffect(() => { currentRecordingRef.current = currentRecording; }, [currentRecording]);
+  useEffect(() => { durationRef.current = duration; }, [duration]);
 
   const startRecording = useCallback(async (config: RecordingConfig) => {
-    const recorder = new ScreenRecorder({
-      onStateChange: setState,
-      onDurationUpdate: setDuration,
-      onError: (err) => console.error('Recording error:', err),
-    });
+    // Revoke any stale blob URL from previous recording
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
 
-    recorderRef.current = recorder;
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -38,6 +44,38 @@ export function useRecorder() {
     };
 
     setCurrentRecording(recording);
+
+    const recorder = new ScreenRecorder({
+      onStateChange: setState,
+      onDurationUpdate: setDuration,
+      onError: (err) => console.error('Recording error:', err),
+      onDataAvailable: async (blob) => {
+        // Handle browser-initiated stop (user clicked "Stop sharing")
+        // This fires for both manual stop() and browser-initiated stops
+        const rec = currentRecordingRef.current;
+        if (!rec) return;
+
+        const finalRecording: Recording = {
+          ...rec,
+          duration: durationRef.current,
+          fileSize: blob.size,
+          mimeType: mimeTypeRef.current,
+          status: 'ready',
+          updatedAt: new Date().toISOString(),
+          // Don't persist blob URL -- it's session-scoped and invalid after reload
+        };
+
+        try {
+          await saveRecording(finalRecording, blob);
+        } catch (err) {
+          console.error('Failed to save recording:', err);
+        }
+        setCurrentRecording(null);
+        setDuration(0);
+      },
+    });
+
+    recorderRef.current = recorder;
     const mimeType = await recorder.start(config);
     mimeTypeRef.current = mimeType;
     recording.mimeType = mimeType;
@@ -53,37 +91,36 @@ export function useRecorder() {
   }, []);
 
   const stopRecording = useCallback(async (): Promise<Recording | null> => {
-    if (!recorderRef.current || !currentRecording) return null;
+    const rec = currentRecordingRef.current;
+    if (!recorderRef.current || !rec) return null;
 
     const blob = await recorderRef.current.stop();
-    const finalRecording: Recording = {
-      ...currentRecording,
-      duration,
+    // The onDataAvailable handler saves the recording.
+    // Return the final recording info for the caller.
+    return {
+      ...rec,
+      duration: durationRef.current,
       fileSize: blob.size,
       mimeType: mimeTypeRef.current,
       status: 'ready',
       updatedAt: new Date().toISOString(),
-      videoBlobUrl: URL.createObjectURL(blob),
     };
-
-    await saveRecording(finalRecording, blob);
-    setCurrentRecording(null);
-    setDuration(0);
-    return finalRecording;
-  }, [currentRecording, duration]);
+  }, []);
 
   const addStep = useCallback((step: Omit<AnnotationStep, 'id' | 'timestamp'>) => {
-    if (!currentRecording) return;
-    const newStep: AnnotationStep = {
-      ...step,
-      id: uuidv4(),
-      timestamp: duration,
-    };
-    setCurrentRecording(prev => prev ? {
-      ...prev,
-      steps: [...prev.steps, newStep],
-    } : null);
-  }, [currentRecording, duration]);
+    setCurrentRecording(prev => {
+      if (!prev) return null;
+      const newStep: AnnotationStep = {
+        ...step,
+        id: uuidv4(),
+        timestamp: durationRef.current,
+      };
+      return {
+        ...prev,
+        steps: [...prev.steps, newStep],
+      };
+    });
+  }, []);
 
   const captureScreenshot = useCallback(async () => {
     return recorderRef.current?.captureScreenshot() ?? null;

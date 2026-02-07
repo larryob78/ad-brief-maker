@@ -132,11 +132,15 @@ export function RecordingControls() {
   };
 
   const handleStop = async () => {
-    await stopRecording();
-    await refreshRecordings();
+    try {
+      await stopRecording();
+      await refreshRecordings();
+    } catch (err) {
+      console.error('Failed to stop recording:', err);
+    }
   };
 
-  const isRecording = state === 'recording' || state === 'paused';
+  const isRecording = state === 'recording' || state === 'paused' || state === 'stopping';
 
   return (
     <div style={styles.panel}>
@@ -217,8 +221,8 @@ export function RecordingControls() {
             <button style={styles.pauseBtn} onClick={state === 'paused' ? resumeRecording : pauseRecording}>
               {state === 'paused' ? 'Resume' : 'Pause'}
             </button>
-            <button style={styles.stopBtn} onClick={handleStop}>
-              Stop & Save
+            <button style={styles.stopBtn} onClick={handleStop} disabled={state === 'stopping'}>
+              {state === 'stopping' ? 'Saving...' : 'Stop & Save'}
             </button>
           </>
         )}
