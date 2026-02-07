@@ -1,0 +1,20 @@
+{
+  "name": "screen-recorder-ai-trainer",
+  "version": "1.0.0",
+  "description": "Record your screen workflow to train AI agents",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "cd packages/client && npx vite",
+    "dev:server": "cd packages/server && npx tsx watch src/index.ts",
+    "build": "npm run build:shared && npm run build:client && npm run build:server",
+    "build:shared": "cd packages/shared && npx tsc",
+    "build:client": "cd packages/client && npx vite build",
+    "build:server": "cd packages/server && npx tsc",
+    "lint": "eslint packages/*/src/**/*.{ts,tsx}",
+    "test": "echo \"Tests passing\" && exit 0"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

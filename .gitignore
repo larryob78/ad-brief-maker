@@ -137,3 +137,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Screen recorder app data
+screen-recorder-ai-trainer/uploads/
+screen-recorder-ai-trainer/data/
