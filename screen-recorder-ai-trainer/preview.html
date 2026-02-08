@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Screen Recorder AI Trainer - UI Preview</title>
+<style>
+:root {
+  --bg-primary: #0f0f13;
+  --bg-secondary: #1a1a24;
+  --bg-tertiary: #252533;
+  --bg-hover: #2a2a3d;
+  --text-primary: #e8e8ed;
+  --text-secondary: #9898a8;
+  --text-muted: #6b6b7b;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --accent-bg: rgba(99, 102, 241, 0.12);
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --border: #2d2d3d;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow: hidden;
+  height: 100vh;
+}
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent), #a855f7);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 14px;
+}
+.logo-text { font-size: 1rem; font-weight: 600; }
+.logo-sub { font-size: 0.75rem; color: var(--text-muted); }
+.header-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.75rem; color: var(--text-muted);
+}
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--success);
+}
+
+/* Main layout */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar {
+  width: 320px; display: flex; flex-direction: column;
+  border-right: 1px solid var(--border); background: var(--bg-primary); flex-shrink: 0;
+}
+.sidebar-top { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+/* Recording Controls Panel */
+.panel {
+  padding: 24px; background: var(--bg-secondary);
+  border-radius: var(--radius-lg); border: 1px solid var(--border);
+}
+.panel-title {
+  font-size: 0.875rem; font-weight: 600; margin-bottom: 16px;
+  color: var(--text-primary);
+}
+.config-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 20px;
+}
+.config-item { display: flex; flex-direction: column; gap: 4px; }
+.config-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
+select, input[type="text"], textarea {
+  font-family: inherit; font-size: 0.8rem; padding: 8px 10px;
+  background: var(--bg-tertiary); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;
+}
+.checkbox-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;
+}
+.record-btn {
+  width: 100%; padding: 12px 20px; border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
+  font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.15s ease;
+}
+.record-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.record-dot {
+  width: 14px; height: 14px; border-radius: 50%; background: white;
+  opacity: 0.9;
+}
+
+/* Export Panel */
+.export-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; }
+.export-desc {
+  font-size: 0.78rem; color: var(--text-muted);
+  margin-bottom: 16px; line-height: 1.5;
+}
+.export-btn {
+  width: 100%; padding: 10px 16px; border-radius: var(--radius-sm);
+  background: var(--bg-tertiary); color: var(--text-primary);
+  border: 1px solid var(--border); font-size: 0.8rem; font-weight: 500;
+  margin-bottom: 8px; text-align: left; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  transition: all 0.15s ease;
+}
+.export-btn:hover { border-color: var(--accent); }
+.export-btn-label { font-size: 0.65rem; color: var(--text-muted); }
+.stats {
+  margin-top: 16px; padding: 12px; background: var(--bg-tertiary);
+  border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-secondary);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.stat-value { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+
+/* Recording List */
+.rec-list { flex: 1; overflow: auto; padding: 16px; }
+.rec-list-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 12px; }
+.rec-card {
+  padding: 12px 16px; background: var(--bg-tertiary);
+  border-radius: var(--radius-md); margin-bottom: 8px;
+  cursor: pointer; border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+.rec-card:hover { background: var(--bg-hover); }
+.rec-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+.rec-card-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+}
+.rec-card-title { font-size: 0.85rem; font-weight: 600; }
+.rec-card-meta {
+  display: flex; gap: 12px; font-size: 0.7rem; color: var(--text-muted);
+}
+.rec-card-delete {
+  padding: 4px 8px; background: transparent; color: var(--text-muted);
+  font-size: 0.75rem; border: none; cursor: pointer; border-radius: var(--radius-sm);
+}
+.rec-card-delete:hover { color: var(--danger); }
+.steps-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.7rem; color: var(--accent); background: var(--accent-bg);
+  padding: 2px 8px; border-radius: 10px; margin-top: 6px;
+}
+
+/* Content area */
+.content {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg-primary);
+}
+.content-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.title-input {
+  font-size: 1.1rem; font-weight: 600; background: transparent; border: none;
+  color: var(--text-primary); width: 100%; outline: none; padding: 4px 0;
+  border-bottom: 2px solid var(--accent);
+}
+.desc-textarea {
+  width: 100%; resize: none; min-height: 48px; font-size: 0.8rem; margin-top: 8px;
+}
+.tag-area { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;
+  background: var(--accent-bg); color: var(--accent); font-weight: 500;
+}
+.tag-x { cursor: pointer; margin-left: 2px; }
+
+/* Video area */
+.video-container { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+.video-placeholder {
+  width: 100%; height: 220px; border-radius: var(--radius-md);
+  background: #000; display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 0.85rem;
+  position: relative; overflow: hidden;
+}
+.video-gradient {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.08));
+}
+.video-actions { display: flex; gap: 8px; margin-top: 8px; }
+.small-btn {
+  padding: 6px 12px; border-radius: var(--radius-sm); background: var(--bg-tertiary);
+  color: var(--text-secondary); border: 1px solid var(--border);
+  font-size: 0.75rem; cursor: pointer;
+}
+.small-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+
+/* Steps section */
+.steps-section { flex: 1; overflow: auto; padding: 16px 24px; }
+.section-title {
+  font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);
+  margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+}
+.add-btn {
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  background: var(--accent); color: white; font-size: 0.75rem;
+  font-weight: 600; border: none; cursor: pointer;
+}
+.add-btn:hover { background: var(--accent-hover); }
+.step-card {
+  padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md);
+  margin-bottom: 8px; border: 1px solid var(--border);
+}
+.step-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.step-num { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+.step-timestamp {
+  font-size: 0.7rem; color: var(--accent); font-family: monospace; font-weight: 600;
+  background: var(--accent-bg); padding: 2px 6px; border-radius: 4px;
+}
+.step-type {
+  font-size: 0.65rem; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.step-delete {
+  padding: 2px 6px; background: transparent; color: var(--text-muted);
+  font-size: 0.7rem; border: none; cursor: pointer; margin-left: auto;
+}
+.step-delete:hover { color: var(--danger); }
+.step-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.step-input {
+  width: 100%; padding: 6px 8px; font-size: 0.78rem;
+  background: var(--bg-tertiary); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;
+}
+.step-input:focus { border-color: var(--accent); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 3px; }
+
+/* Animations */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.step-card { animation: fadeIn 0.2s ease; }
+
+/* Label for preview */
+.preview-label {
+  position: fixed; bottom: 16px; right: 16px; padding: 8px 16px;
+  background: var(--accent); color: white; border-radius: 20px;
+  font-size: 0.75rem; font-weight: 600; z-index: 100;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">SR</div>
+      <div>
+        <div class="logo-text">Screen Recorder</div>
+        <div class="logo-sub">AI Workflow Trainer</div>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      Ready to record
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-top">
+        <!-- Recording Controls -->
+        <div class="panel">
+          <div class="panel-title">Recording Controls</div>
+          <div class="config-grid">
+            <div class="config-item">
+              <span class="config-label">Capture Mode</span>
+              <select><option>Full Screen</option><option>Window</option><option>Browser Tab</option></select>
+            </div>
+            <div class="config-item">
+              <span class="config-label">Frame Rate</span>
+              <select><option>30 FPS</option><option>15 FPS</option><option>24 FPS</option><option>60 FPS</option></select>
+            </div>
+            <label class="checkbox-label"><input type="checkbox"> Microphone Audio</label>
+            <label class="checkbox-label"><input type="checkbox"> System Audio</label>
+          </div>
+          <button class="record-btn" onclick="this.innerHTML='<div style=\'width:14px;height:14px;border-radius:50%;background:white;animation:pulse 1.5s infinite\'></div> Recording... (click Stop to save)'; this.style.background='var(--bg-tertiary)'; this.style.border='1px solid var(--danger)'">
+            <div class="record-dot"></div>
+            Start Recording
+          </button>
+        </div>
+
+        <!-- Export Panel -->
+        <div class="panel">
+          <div class="export-title">Export for AI Training</div>
+          <div class="export-desc">Export your annotated recordings as structured training data for AI agents.</div>
+          <button class="export-btn">
+            <div><div>JSON Format</div><div class="export-btn-label">Structured data, human-readable</div></div>
+            <span style="color:var(--text-muted)">.json</span>
+          </button>
+          <button class="export-btn">
+            <div><div>JSONL Format</div><div class="export-btn-label">Line-delimited, for fine-tuning pipelines</div></div>
+            <span style="color:var(--text-muted)">.jsonl</span>
+          </button>
+          <div class="stats">
+            <div><div class="stat-value">3</div><div>Recordings</div></div>
+            <div><div class="stat-value">2</div><div>Annotated</div></div>
+            <div><div class="stat-value">8</div><div>Total Steps</div></div>
+            <div><div class="stat-value" style="color:var(--success)">67%</div><div>Coverage</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recording List -->
+      <div class="rec-list">
+        <div class="rec-list-title">Recordings (3)</div>
+
+        <div class="rec-card selected">
+          <div class="rec-card-header">
+            <span class="rec-card-title">Email Campaign Setup</span>
+            <button class="rec-card-delete">Delete</button>
+          </div>
+          <div class="rec-card-meta">
+            <span>02:34</span>
+            <span>18.2 MB</span>
+            <span>2/8/2026, 10:15 AM</span>
+          </div>
+          <div class="steps-badge">5 steps annotated</div>
+        </div>
+
+        <div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-title">Social Media Post Flow</span>
+            <button class="rec-card-delete">Delete</button>
+          </div>
+          <div class="rec-card-meta">
+            <span>01:22</span>
+            <span>9.4 MB</span>
+            <span>2/8/2026, 9:45 AM</span>
+          </div>
+          <div class="steps-badge">3 steps annotated</div>
+        </div>
+
+        <div class="rec-card">
+          <div class="rec-card-header">
+            <span class="rec-card-title">Client Brief Review</span>
+            <button class="rec-card-delete">Delete</button>
+          </div>
+          <div class="rec-card-meta">
+            <span>03:10</span>
+            <span>22.1 MB</span>
+            <span>2/7/2026, 4:30 PM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT CONTENT: Annotation Editor -->
+    <div class="content">
+      <div class="content-header">
+        <input class="title-input" value="Email Campaign Setup" readonly>
+        <textarea class="desc-textarea" readonly>Recording of full email campaign creation workflow in Mailchimp, from template selection to scheduling.</textarea>
+        <div class="tag-area">
+          <span class="tag">email<span class="tag-x">x</span></span>
+          <span class="tag">mailchimp<span class="tag-x">x</span></span>
+          <span class="tag">campaign<span class="tag-x">x</span></span>
+          <input class="step-input" placeholder="Add tag..." style="width:120px">
+        </div>
+      </div>
+
+      <div class="video-container">
+        <div class="video-placeholder">
+          <div class="video-gradient"></div>
+          <div style="z-index:1;text-align:center">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+              <polygon points="5,3 19,12 5,21" fill="var(--text-muted)" opacity="0.3"/>
+            </svg>
+            <div style="margin-top:8px">Screen recording playback</div>
+          </div>
+        </div>
+        <div class="video-actions">
+          <button class="small-btn">Download Video</button>
+        </div>
+      </div>
+
+      <div class="steps-section">
+        <div class="section-title">
+          <span>Workflow Steps (5)</span>
+          <button class="add-btn">+ Add Step</button>
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <span class="step-num">#1</span>
+            <span class="step-timestamp">00:00</span>
+            <span class="step-type">NAVIGATE</span>
+            <button class="step-delete">Remove</button>
+          </div>
+          <div class="step-inputs">
+            <input class="step-input" value="Open Mailchimp dashboard" readonly>
+            <select class="step-input"><option>navigate</option></select>
+          </div>
+          <input class="step-input" value="Navigate to mailchimp.com and log into account" readonly style="width:100%;margin-bottom:8px">
+          <div class="step-inputs">
+            <input class="step-input" value="Chrome" readonly>
+            <input class="step-input" value="0" readonly>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <span class="step-num">#2</span>
+            <span class="step-timestamp">00:18</span>
+            <span class="step-type">CLICK</span>
+            <button class="step-delete">Remove</button>
+          </div>
+          <div class="step-inputs">
+            <input class="step-input" value="Click Create Campaign button" readonly>
+            <select class="step-input"><option>click</option></select>
+          </div>
+          <input class="step-input" value="Click the green 'Create' button in the top-right corner" readonly style="width:100%;margin-bottom:8px">
+          <div class="step-inputs">
+            <input class="step-input" value="Mailchimp" readonly>
+            <input class="step-input" value="18000" readonly>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <span class="step-num">#3</span>
+            <span class="step-timestamp">00:42</span>
+            <span class="step-type">TYPE</span>
+            <button class="step-delete">Remove</button>
+          </div>
+          <div class="step-inputs">
+            <input class="step-input" value="Enter email subject line" readonly>
+            <select class="step-input"><option>type</option></select>
+          </div>
+          <input class="step-input" value="Type the campaign subject: 'Spring Sale - 30% Off All Items'" readonly style="width:100%;margin-bottom:8px">
+          <div class="step-inputs">
+            <input class="step-input" value="Mailchimp" readonly>
+            <input class="step-input" value="42000" readonly>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <span class="step-num">#4</span>
+            <span class="step-timestamp">01:15</span>
+            <span class="step-type">CLICK</span>
+            <button class="step-delete">Remove</button>
+          </div>
+          <div class="step-inputs">
+            <input class="step-input" value="Select email template" readonly>
+            <select class="step-input"><option>click</option></select>
+          </div>
+          <input class="step-input" value="Browse templates and select 'Product Showcase' layout" readonly style="width:100%;margin-bottom:8px">
+          <div class="step-inputs">
+            <input class="step-input" value="Mailchimp" readonly>
+            <input class="step-input" value="75000" readonly>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <span class="step-num">#5</span>
+            <span class="step-timestamp">02:10</span>
+            <span class="step-type">CLICK</span>
+            <button class="step-delete">Remove</button>
+          </div>
+          <div class="step-inputs">
+            <input class="step-input" value="Schedule campaign" readonly>
+            <select class="step-input"><option>click</option></select>
+          </div>
+          <input class="step-input" value="Click 'Schedule' and set send date to tomorrow at 9am" readonly style="width:100%;margin-bottom:8px">
+          <div class="step-inputs">
+            <input class="step-input" value="Mailchimp" readonly>
+            <input class="step-input" value="130000" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="preview-label">UI Preview - Static Mockup</div>
+</body>
+</html>
